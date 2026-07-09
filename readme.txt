@@ -3,9 +3,9 @@
 This repository contains the MATLAB code used to simulate and analyze the ODE-based models described in the Supplementary Information of our paper: "Phase-aligned synthesis and stability modulation amplify circadian protein oscillations in plants."
 
 
-## [Folder: Figure1_to_3] Mathematical Model and Parameter Fitting
+## [Folder: Figure1] Mathematical Model and Parameter Fitting
 
-Objective: To determine whether previously identified Protein-Protein Interactions (PPIs) are sufficient to recapitulate TOC1 and ZTL protein dynamics. If they are not, we investigate whether adding new PPIs can help fit the time-course data, and predict how novel interactions lead to reciprocal stabilization. (See Supplementary Methods for detailed methodology)
+Objective: To determine whether previously identified Protein-Protein Interactions (PPIs) are sufficient to recapitulate TOC1 and ZTL protein dynamics. If they are not, we investigate whether adding new PPIs can help fit the time-course data, and predict how novel interactions lead to reciprocal stabilization (See Supplementary Methods for detail).
 
 # Repository Structure
 - multi_degradation_ODE_v6_5.m: Defines the ODE system describing rhythmic synthesis and degradation dynamics.
@@ -13,6 +13,7 @@ Objective: To determine whether previously identified Protein-Protein Interactio
 - sa.m: Simulated annealing (SA) algorithm for parameter estimation.
 - adjust_range.m: Utility function for adjusting parameter search ranges (see Supplementary Tables 4 and 5 for ranges).
 - save_to_csv.m: Utility function for saving outputs to a CSV file.
+- classify_1111_perturb_add.m : Performs post hoc PPI-removal perturbation analysis and classifies the 2,000 successful models into essential PPI scenarios.
 - time_courses_1110.m: Plots the time courses of proteins and the stability of TOC1.
 
 # key variable: bd_type
@@ -34,19 +35,77 @@ Run sa([0,0,0,0], ran_num) using a fixed random seed (e.g., sa([0,0,0,0], 13)).
 Run sa([1,1,1,1], ran_num) with a fixed random seed (e.g., sa([1,1,1,1], 13)).
 
 - This introduces four new possible interactions into the model.
-- Result: Using this code, we found 2,000 different parameter sets (Supplementary Table 2) capable of simulating the experimental time courses (Fig. 1h, right).
-- When classifying these 2,000 successful models, ZTL-PRR3 and GI-PRR3 interactions—leading specifically to reciprocal stabilization—emerged as a consistent feature across the five dominant scenarios. Parameters corresponding to this scenario are saved in para_1110_full.csv.
+- Result: Using this code, we found 2,000 different parameter sets (Supplementary Table 2) capable of simulating the experimental time courses (Figure 1H, right).
 
-# C. Plotting the results
-Run time_courses_1110.m. This generates time-course plots for individual proteins and their respective complexes (Extended Data Fig. 3).
+# C. Filtering successful models to identify essential PPIs
+
+Run classify_1111_perturb_add.m. For each of the 2,000 fitted models, this selects the PPIs that are essential for maintaining the fitted protein time-course dynamics — an interaction is retained as essential if deleting it substantially increases the fitting error.
+
+- Output: classify_result_1111_essential.csv, a 2,000 × 8 matrix. Each row is one model; each column pair is one interaction (two elements because A→B and B→A effects are evaluated separately).
+
+| Columns | Interaction |
+|---|---|
+| 1–2 | TOC1 – GI |
+| 3–4 | ZTL_light – PRR3 |
+| 5–6 | ZTL_dark – PRR3 |
+| 7–8 | GI – PRR3 |
+
+Each element is a number from 1 to 4 (see Figure S2A):
+1 = no interaction, 2 = stabilize, 3 = destabilize, 4 = no stability change
+
+ The distribution of these scenarios was highly skewed (see classify_result_sorted_1111_essential.csv), with the three most frequent scenarios, R1, R2, and R3, dominating the results. ZTL-PRR3 and GI-PRR3 interactions—leading specifically to reciprocal stabilization—emerged as a consistent feature. Parameters corresponding to this scenario are saved in para_1110_full.csv.
+
+
+# D. Plotting the results
+Run time_courses_1110.m. This generates time-course plots for individual proteins and their respective complexes (Figure S4).
 - Figure 11: TOC1 time course and specific complexes (e.g., TOC1-PRR3).
 - Figure 12: ZTL time course and specific complexes (e.g., ZTL_light-PRR3).
 - Figure 13: GI time course and specific complexes (e.g., ZTL_light-GI).
 - Figure 14: PRR3 time course and specific complexes (e.g., GI-PRR3).
 
-This script also calculates TOC1 stability and its amplitude. The WT TOC1 stability amplitude data is exported to TOC1 stability_amplitude.csv.
 
-## [Folder Figure4_and_4S] Rhythmic Changes in Protein Stability
+
+## [Folder: Figure3A, 3B] Stability Calculation
+
+Calculates TOC1 degradation rate and stability over time, and the amplitude of TOC1 stability, for WT and mutant conditions.
+
+# Repository Structure
+
+- multi_degradation_ODE_v6_5.m: Defines the ODE system describing rhythmic synthesis and degradation dynamics.
+- degradation_rate_WT.m: Calculates the degradation rate of TOC1 over time.
+- stability_TOC1.m: Calculates the stability of TOC1 over time.
+
+# A. Calculate the degradation rate of TOC1 over time (WT and mutants)
+
+Run degradation_rate_WT.m. To simulate the mutants, edit line 64:
+
+| Condition | Line 64 | Output |
+|---|---|---|
+| WT | (unchanged) | `TOC1_degra_wt.csv` |
+| prr3-1 | `tp=0;` | `TOC1_degra_p.csv` |
+| ztl103 | `tz=0;` | `TOC1_degra_z.csv` |
+| prr3-1ztl103 | `tz=0; tp=0;` | `TOC1_degra_pz.csv` |
+
+- Output format: the first row is time; the following 257 rows are the TOC1 degradation rate over time, one row per model.
+
+# B. Calculate TOC1 stability (WT and mutants)
+
+Run stability_TOC1.m. This computes TOC1 stability from the degradation rates above and extracts its amplitude.
+
+Output:
+
+- TOC1_raw_stab_wt_summary.csv — TOC1 stability in WT. Row 1: time. Row 2: mean stability across the 257 models. Row 3: standard deviation. Equivalent files are produced for the three mutant conditions.
+- TOC1_stab_amp_raw_all.csv — amplitude of TOC1 stability for each of the 257 models (one column per model).
+
+| Row | Condition |
+|---|---|
+| 1 | WT |
+| 2 | prr3-1 |
+| 3 | ztl103 |
+| 4 | prr3-1 ztl103 |
+
+
+## [Folder Figure4_and_S5] Rhythmic Changes in Protein Stability
 
 Objective: Rhythmic changes in protein stability over time play a pivotal role in generating strong circadian rhythms of proteins in other organisms, including mice and Drosophila. For a given protein $p(t)$ driven by mRNA $m(t)$, we assume the following dynamics:
 
