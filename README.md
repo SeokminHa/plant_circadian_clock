@@ -57,7 +57,7 @@ Each element is a number from 1 to 4 (see Figure S2A):
 
 
 # D. Plotting the results
-Run time_courses_1110.m. This generates time-course plots for individual proteins and their respective complexes (Figure S4).
+Run `time_courses_1110.m`. This generates time-course plots for individual proteins and their respective complexes (Figure S4).
 - Figure 11: TOC1 time course and specific complexes (e.g., TOC1-PRR3).
 - Figure 12: ZTL time course and specific complexes (e.g., ZTL_light-PRR3).
 - Figure 13: GI time course and specific complexes (e.g., ZTL_light-GI).
